@@ -26,6 +26,9 @@ function ensure_dir_with_git_branch() {
         git checkout -f "$BRANCH"
     fi
     git pull -f
+    if [ "$BRANCH" != "" ]; then
+        git checkout -f "$BRANCH"
+    fi
     popd
 }
 
