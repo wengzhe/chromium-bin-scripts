@@ -114,6 +114,7 @@ for ver in {76..80}; do
         # 需要跳过第一个没有发布的版本
         git checkout -f $CUR_TAG
         get_source_version
+        git checkout -f master
         if ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
             if compile_gn; then
                 echo "Releasing GN"
