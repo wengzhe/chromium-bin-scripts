@@ -92,9 +92,9 @@ function release_gn() {
     cd $GN_RELEASE_DIR
     mv $GN_DIR/out/gn ./
     git add .
-    git commit --allow-empty -m "build.sh: $GN_REVISION"
-    git tag $GN_REVISION
-    echo "build.sh: $GN_REVISION"
+    git commit --allow-empty -m "build.sh: r-$GN_REVISION"
+    git tag r-$GN_REVISION
+    echo "build.sh: r-$GN_REVISION"
     ./gn --version
     git push origin --tags main:main || echo "Push failed, skip"
 }
