@@ -112,13 +112,13 @@ for ver in {100..76}; do
         # 需要跳过第一个没有发布的版本
         git checkout -f $CUR_TAG
         get_source_version
-        if ! tag_exists $GN_RELEASE_DIR $GN_REVISION; then
+        if ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
             if compile_gn; then
                 echo "Releasing GN"
                 # release_gn
             fi
         fi
-        if ! tag_exists $CLANG_RELEASE_DIR $LLVM_REVISION; then
+        if ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
             if compile_llvm; then
                 echo "Releasing CLANG"
                 # release_clang
