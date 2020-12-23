@@ -39,7 +39,7 @@ export CLANG_SCRIPT_DIR=$CHROMIUM_DIR/tools/clang/scripts
 export THIRD_PARTY_DIR=$CHROMIUM_DIR/third_party
 
 function get_source_version() {
-    export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'"`
+    export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^']*"`
     export GN_REVISION=`grep gn_version $CHROMIUM_DIR/DEPS | grep -o 'git_revision:\([0-9a-z]*\)' | cut -d: -f2`
 }
 
