@@ -31,7 +31,7 @@ function ensure_dir_with_git_branch() {
 }
 
 cd $SOURCE_DIR
-ensure_dir_with_git_branch chromium https://chromium.googlesource.com/chromium/src.git master
+# ensure_dir_with_git_branch chromium https://chromium.googlesource.com/chromium/src.git master
 
 export CHROMIUM_DIR=$SOURCE_DIR/chromium
 export GN_DIR=$SOURCE_DIR/gn
