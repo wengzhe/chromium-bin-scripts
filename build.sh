@@ -26,7 +26,6 @@ function ensure_dir_with_git_branch() {
         git checkout -f "$BRANCH"
     fi
     git pull -f
-    git lfs install
     popd
 }
 
