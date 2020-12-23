@@ -101,6 +101,7 @@ function release_gn() {
 }
 
 function release_clang() {
+    return 0
 }
 
 
