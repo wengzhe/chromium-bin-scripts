@@ -39,7 +39,7 @@ export CLANG_SCRIPT_DIR=$CHROMIUM_DIR/tools/clang/scripts
 export THIRD_PARTY_DIR=$CHROMIUM_DIR/third_party
 
 function get_source_version() {
-    export LLVM_REVISION=`python $CLANG_SCRIPT_DIR/update.py --print-revision`
+    export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'"`
     export GN_REVISION=`grep gn_version $CHROMIUM_DIR/DEPS | grep -o 'git_revision:\([0-9a-z]*\)' | cut -d: -f2`
 }
 
@@ -105,11 +105,12 @@ function release_clang() {
 }
 
 
-for ver in {100..70}; do
+for ver in {100..76}; do
     cd $CHROMIUM_DIR
-    TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
+    CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
     if [ "$LAST_TAG" != "" ]; then
         # 需要跳过第一个没有发布的版本
+        git checkout -f $CUR_TAG
         get_source_version
         if ! tag_exists $GN_RELEASE_DIR $GN_REVISION; then
             if compile_gn; then
@@ -124,5 +125,5 @@ for ver in {100..70}; do
             fi
         fi
     fi
-    LAST_TAG=$TAG
+    LAST_TAG=$CUR_TAG
 done
