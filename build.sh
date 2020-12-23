@@ -105,7 +105,7 @@ function release_clang() {
 }
 
 
-for ver in {1000..70}; do
+for ver in {100..70}; do
     cd $CHROMIUM_DIR
     TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
     if [ "$LAST_TAG" != "" ]; then
