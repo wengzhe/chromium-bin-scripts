@@ -49,7 +49,10 @@ function compile_llvm() {
     cd $THIRD_PARTY_DIR
     ensure_dir_with_git_branch llvm https://github.com/llvm/llvm-project $LLVM_REVISION
     cd $CLANG_SCRIPT_DIR
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo || \
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --lto-lld
 }
 
 function compile_gn() {
@@ -97,9 +100,10 @@ function release_gn() {
     git add .
     git commit --allow-empty -m "build.sh: r-$GN_REVISION"
     git tag r-$GN_REVISION
+    git tag $CUR_TAG
     echo "build.sh: r-$GN_REVISION"
     ./gn --version
-    git push origin --tags main:main || echo "Push failed, skip"
+    # git push origin --tags main:main || echo "Push failed, skip"
 }
 
 function release_clang() {
@@ -109,22 +113,22 @@ function release_clang() {
 
 for ver in {76..80}; do
     cd $CHROMIUM_DIR
-    CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
+    export CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
     if [ "$LAST_TAG" != "" ]; then
         # 需要跳过第一个没有发布的版本
         git checkout -f $CUR_TAG
         get_source_version
-        git checkout -f master
+        # git checkout -f master
         if ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
             if compile_gn; then
                 echo "Releasing GN"
-                # release_gn
+                release_gn
             fi
         fi
         if ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
             if compile_llvm; then
                 echo "Releasing CLANG"
-                # release_clang
+                release_clang
             fi
         fi
     fi
