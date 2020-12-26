@@ -129,12 +129,16 @@ for ver in {76..80}; do
             if compile_gn; then
                 echo "Releasing GN"
                 release_gn
+            else
+                exit
             fi
         fi
         if ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
             if compile_llvm; then
                 echo "Releasing CLANG"
                 release_clang
+            else
+                exit
             fi
         fi
     fi
