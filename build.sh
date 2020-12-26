@@ -127,7 +127,7 @@ function release_clang() {
     
     clang-$STAMP*/bin/clang --version
     read -p "Check Clang $STAMP vs $(ls)"
-    return 0
+    # git push origin --tags main:main || echo "Push failed, skip"
 }
 
 
