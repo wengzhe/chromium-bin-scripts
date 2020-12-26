@@ -104,21 +104,33 @@ function release_gn() {
     git tag $CUR_TAG
     echo "build.sh: r-$GN_REVISION"
     ./gn --version
-    read -p "Check $GN_REVISION vs $(./gn --version)"
+    read -p "Check GN $GN_REVISION vs $(./gn --version)"
     # git push origin --tags main:main || echo "Push failed, skip"
 }
 
 function release_clang() {
     cd $CLANG_SCRIPT_DIR
     cp $ROOT_DIR/package.py ./
+    rm -rf clang-*
     python package.py
+    STAMP=$(python update.py --print-revision)
     
-    read -p "Package done"
+    cd $CLANG_RELEASE_DIR
+    rm -rf clang-*
+    mv $CLANG_SCRIPT_DIR/clang-$STAMP-* ./
+    git add .
+    git commit --allow-empty -m "build.sh: r-$LLVM_REVISION"
+    git tag r-$LLVM_REVISION
+    git tag $STAMP
+    git tag $CUR_TAG
+    echo "build.sh: r-$LLVM_REVISION"
+    
+    read -p "Check Clang $STAMP vs $(ls)"
     return 0
 }
 
 
-for ver in {76..80}; do
+for ver in {76..100}; do
     cd $CHROMIUM_DIR
     export CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
     if [ "$LAST_TAG" != "" ]; then
