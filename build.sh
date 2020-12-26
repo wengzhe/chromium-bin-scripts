@@ -143,11 +143,17 @@ for ver in {76..100}; do
             compile_gn || exit
             echo "Releasing GN"
             release_gn || exit
+        elif ! tag_exists $GN_RELEASE_DIR $CUR_TAG; then
+            cd $GN_RELEASE_DIR
+            git tag $CUR_TAG r-$GN_REVISION
         fi
         if ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
             compile_llvm || exit
             echo "Releasing CLANG"
             release_clang || exit
+        elif ! tag_exists $CLANG_RELEASE_DIR $CUR_TAG; then
+            cd $CLANG_RELEASE_DIR
+            git tag $CUR_TAG r-$LLVM_REVISION
         fi
     fi
     LAST_TAG=$CUR_TAG
