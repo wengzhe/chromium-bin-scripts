@@ -39,6 +39,7 @@ export CHROMIUM_DIR=$SOURCE_DIR/chromium
 export GN_DIR=$SOURCE_DIR/gn
 export CLANG_SCRIPT_DIR=$CHROMIUM_DIR/tools/clang/scripts
 export THIRD_PARTY_DIR=$CHROMIUM_DIR/third_party
+export LLVM_BUILD_DIR=$THIRD_PARTY_DIR/llvm-build/Release+Asserts
 
 function get_source_version() {
     export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^']*"`
@@ -103,10 +104,16 @@ function release_gn() {
     git tag $CUR_TAG
     echo "build.sh: r-$GN_REVISION"
     ./gn --version
+    read -p "Check $GN_REVISION vs $(./gn --version)"
     # git push origin --tags main:main || echo "Push failed, skip"
 }
 
 function release_clang() {
+    cd $CLANG_SCRIPT_DIR
+    echo '' > build.py  # do not build again
+    python package.py
+    
+    read -p "Package done"
     return 0
 }
 
