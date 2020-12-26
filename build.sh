@@ -103,8 +103,10 @@ function release_gn() {
     git tag r-$GN_REVISION
     git tag $CUR_TAG
     echo "build.sh: r-$GN_REVISION"
-    ./gn --version
-    read -p "Check GN $GN_REVISION vs $(./gn --version)"
+    
+    check_str="Check GN $GN_REVISION vs $(./gn --version)"
+    echo $check_str
+    echo $check_str >> $ROOT_DIR/build.log
     # git push origin --tags main:main || echo "Push failed, skip"
 }
 
@@ -125,8 +127,9 @@ function release_clang() {
     git tag $CUR_TAG
     echo "build.sh: r-$LLVM_REVISION"
     
-    clang-$STAMP*/bin/clang --version
-    read -p "Check Clang $STAMP vs $(ls)"
+    check_str="Check Clang $LLVM_REVISION vs $(clang-$STAMP*/bin/clang --version) vs $STAMP"
+    echo $check_str
+    echo $check_str >> $ROOT_DIR/build.log
     # git push origin --tags main:main || echo "Push failed, skip"
 }
 
