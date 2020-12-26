@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
 cd "$(dirname "$0")"
+export ROOT_DIR=$(pwd)
 
 if [ ! -d ./src_dir ]; then
     mkdir src_dir
@@ -10,8 +11,8 @@ if [ ! -d ./release ]; then
     mkdir release
 fi
 
-export SOURCE_DIR=$(pwd)/src_dir
-export RELEASE_DIR=$(pwd)/release
+export SOURCE_DIR=$ROOT_DIR/src_dir
+export RELEASE_DIR=$ROOT_DIR/release
 
 function ensure_dir_with_git_branch() {
     DIR=$1
@@ -109,7 +110,7 @@ function release_gn() {
 
 function release_clang() {
     cd $CLANG_SCRIPT_DIR
-    echo '' > build.py  # do not build again
+    cp $/ROOT_DIR/package.py ./
     python package.py
     
     read -p "Package done"
