@@ -127,20 +127,14 @@ for ver in {76..80}; do
         get_source_version
         # git checkout -f master
         if ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
-            if compile_gn; then
-                echo "Releasing GN"
-                release_gn
-            else
-                exit
-            fi
+            compile_gn || exit
+            echo "Releasing GN"
+            release_gn || exit
         fi
         if ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
-            if compile_llvm; then
-                echo "Releasing CLANG"
-                release_clang
-            else
-                exit
-            fi
+            compile_llvm || exit
+            echo "Releasing CLANG"
+            release_clang || exit
         fi
     fi
     LAST_TAG=$CUR_TAG
