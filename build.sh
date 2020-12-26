@@ -110,7 +110,7 @@ function release_gn() {
 
 function release_clang() {
     cd $CLANG_SCRIPT_DIR
-    cp $/ROOT_DIR/package.py ./
+    cp $ROOT_DIR/package.py ./
     python package.py
     
     read -p "Package done"
