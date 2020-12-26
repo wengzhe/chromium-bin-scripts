@@ -117,7 +117,7 @@ function release_clang() {
     
     cd $CLANG_RELEASE_DIR
     rm -rf clang-*
-    mv $CLANG_SCRIPT_DIR/clang-$STAMP-* ./
+    mv $CLANG_SCRIPT_DIR/clang-$STAMP* ./
     git add .
     git commit --allow-empty -m "build.sh: r-$LLVM_REVISION"
     git tag r-$LLVM_REVISION
@@ -125,6 +125,7 @@ function release_clang() {
     git tag $CUR_TAG
     echo "build.sh: r-$LLVM_REVISION"
     
+    clang-$STAMP*/bin/clang --version
     read -p "Check Clang $STAMP vs $(ls)"
     return 0
 }
