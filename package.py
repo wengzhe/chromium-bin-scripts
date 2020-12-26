@@ -204,10 +204,6 @@ def main():
   else:
     want.extend([
       'bin/clang',
-
-      # Include libclang_rt.builtins.a for Fuchsia targets.
-      'lib/clang/$V/lib/aarch64-fuchsia/libclang_rt.builtins.a',
-      'lib/clang/$V/lib/x86_64-fuchsia/libclang_rt.builtins.a',
     ])
   if sys.platform == 'darwin':
     want.extend([
@@ -244,22 +240,12 @@ def main():
       'bin/llvm-objcopy',
 
       # AddressSanitizer C runtime (pure C won't link with *_cxx).
-      'lib/clang/$V/lib/linux/libclang_rt.asan-i386.a',
       'lib/clang/$V/lib/linux/libclang_rt.asan-x86_64.a',
       'lib/clang/$V/lib/linux/libclang_rt.asan-x86_64.a.syms',
 
       # AddressSanitizer C++ runtime.
-      'lib/clang/$V/lib/linux/libclang_rt.asan_cxx-i386.a',
       'lib/clang/$V/lib/linux/libclang_rt.asan_cxx-x86_64.a',
       'lib/clang/$V/lib/linux/libclang_rt.asan_cxx-x86_64.a.syms',
-
-      # AddressSanitizer Android runtime.
-      'lib/clang/$V/lib/linux/libclang_rt.asan-aarch64-android.so',
-      'lib/clang/$V/lib/linux/libclang_rt.asan-arm-android.so',
-      'lib/clang/$V/lib/linux/libclang_rt.asan-i686-android.so',
-
-      # HWASAN Android runtime.
-      'lib/clang/$V/lib/linux/libclang_rt.hwasan-aarch64-android.so',
 
       # MemorySanitizer C runtime (pure C won't link with *_cxx).
       'lib/clang/$V/lib/linux/libclang_rt.msan-x86_64.a',
@@ -270,10 +256,7 @@ def main():
       'lib/clang/$V/lib/linux/libclang_rt.msan_cxx-x86_64.a.syms',
 
       # Profile runtime (used by profiler and code coverage).
-      'lib/clang/$V/lib/linux/libclang_rt.profile-i386.a',
       'lib/clang/$V/lib/linux/libclang_rt.profile-x86_64.a',
-      'lib/clang/$V/lib/linux/libclang_rt.profile-aarch64-android.a',
-      'lib/clang/$V/lib/linux/libclang_rt.profile-arm-android.a',
 
       # ThreadSanitizer C runtime (pure C won't link with *_cxx).
       'lib/clang/$V/lib/linux/libclang_rt.tsan-x86_64.a',
@@ -284,18 +267,12 @@ def main():
       'lib/clang/$V/lib/linux/libclang_rt.tsan_cxx-x86_64.a.syms',
 
       # UndefinedBehaviorSanitizer C runtime (pure C won't link with *_cxx).
-      'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-i386.a',
       'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-x86_64.a',
       'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-x86_64.a.syms',
 
       # UndefinedBehaviorSanitizer C++ runtime.
-      'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone_cxx-i386.a',
       'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone_cxx-x86_64.a',
       'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone_cxx-x86_64.a.syms',
-
-      # UndefinedBehaviorSanitizer Android runtime, needed for CFI.
-      'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-aarch64-android.so',
-      'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-arm-android.so',
 
       # Blacklist for MemorySanitizer (used on Linux only).
       'lib/clang/$V/share/msan_blacklist.txt',
