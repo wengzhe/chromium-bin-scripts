@@ -176,24 +176,6 @@ def main():
   else:
     platform = 'Linux_x64'
 
-  with open('buildlog.txt', 'w') as log:
-    Tee('Starting build\n', log)
-
-    # Do a clobber build.
-    shutil.rmtree(LLVM_BOOTSTRAP_DIR, ignore_errors=True)
-    shutil.rmtree(LLVM_BOOTSTRAP_INSTALL_DIR, ignore_errors=True)
-    shutil.rmtree(LLVM_BUILD_DIR, ignore_errors=True)
-
-    build_cmd = [
-        sys.executable,
-        os.path.join(THIS_DIR, 'build.py'), '--bootstrap', '--disable-asserts',
-        '--run-tests', '--pgo'
-    ]
-    if sys.platform.startswith('linux'):
-      build_cmd.append('--thinlto')
-
-    TeeCmd(build_cmd, log)
-
   stamp = open(STAMP_FILE).read().rstrip()
   if stamp != expected_stamp:
     print('Actual stamp (%s) != expected stamp (%s).' % (stamp, expected_stamp))
