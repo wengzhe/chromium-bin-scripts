@@ -42,6 +42,9 @@ function ensure_dir_with_git_branch() {
     popd
 }
 
+ensure_dir_with_git_branch depot_tools $GIT_DEPOT_TOOLS master
+export PATH="$PATH:$ROOT_DIR/depot_tools"
+
 cd $SOURCE_DIR
 ensure_dir_with_git_branch chromium $GIT_CHROMIUM master
 
