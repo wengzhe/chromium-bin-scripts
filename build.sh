@@ -1,5 +1,14 @@
 #!/bin/bash -ex
 
+# TODO: Split GN and Clang build
+# TODO: Split Revision
+GIT_CHROMIUM=${GIT_CHROMIUM:-"https://chromium.googlesource.com/chromium/src.git"}
+GIT_LLVM=${GIT_LLVM:-"https://github.com/llvm/llvm-project"}
+GIT_GN=${GIT_GN:-"https://gn.googlesource.com/gn"}
+GIT_DEPOT_TOOLS=${GIT_DEPOT_TOOLS:-"https://chromium.googlesource.com/chromium/tools/depot_tools.git"}
+GIT_GN_TARGET="git@github.com:wengzhe/google-gn-bin-centos7.git"
+GIT_CLANG_TARGET="git@github.com:wengzhe/chromium-clang-bin-centos7.git"
+
 cd "$(dirname "$0")"
 export ROOT_DIR=$(pwd)
 
@@ -34,7 +43,7 @@ function ensure_dir_with_git_branch() {
 }
 
 cd $SOURCE_DIR
-# ensure_dir_with_git_branch chromium https://chromium.googlesource.com/chromium/src.git master
+ensure_dir_with_git_branch chromium $GIT_CHROMIUM master
 
 export CHROMIUM_DIR=$SOURCE_DIR/chromium
 export GN_DIR=$SOURCE_DIR/gn
@@ -49,7 +58,7 @@ function get_source_version() {
 
 function compile_llvm() {
     cd $THIRD_PARTY_DIR
-    ensure_dir_with_git_branch llvm https://github.com/llvm/llvm-project $LLVM_REVISION
+    ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION
     cd $CLANG_SCRIPT_DIR
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
@@ -58,7 +67,7 @@ function compile_llvm() {
 
 function compile_gn() {
     cd $SOURCE_DIR
-    ensure_dir_with_git_branch gn https://gn.googlesource.com/gn $GN_REVISION
+    ensure_dir_with_git_branch gn $GIT_GN $GN_REVISION
     
     export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
     export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
@@ -77,8 +86,8 @@ function compile_gn() {
 
 
 cd $RELEASE_DIR
-ensure_dir_with_git_branch gn git@github.com:wengzhe/google-gn-bin-centos7.git main
-ensure_dir_with_git_branch clang git@github.com:wengzhe/chromium-clang-bin-centos7.git main
+ensure_dir_with_git_branch gn $GIT_GN_TARGET main
+ensure_dir_with_git_branch clang $GIT_CLANG_TARGET main
 export GN_RELEASE_DIR=$RELEASE_DIR/gn
 export CLANG_RELEASE_DIR=$RELEASE_DIR/clang
 
