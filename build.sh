@@ -70,8 +70,7 @@ function compile_llvm() {
     cd $CLANG_SCRIPT_DIR
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
 }
 
 function compile_gn() {
@@ -190,7 +189,7 @@ if [ "$BUILD_TAG" != "" ]; then
     export CUR_TAG=$BUILD_TAG
     build_cur_tag
 else
-    for ver in {100..76}; do
+    for ver in {100..77}; do
         cd $CHROMIUM_DIR
         export CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
         if [ "$LAST_TAG" != "" ]; then
