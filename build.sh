@@ -117,9 +117,9 @@ function tag_exists() {
 function release_push() {
     if [ "$GIT_RELEASE" == "true" ]; then
         cd $GN_RELEASE_DIR
-        git push origin --tags main:main
+        git push origin --tags
         cd $CLANG_RELEASE_DIR
-        git push origin --tags main:main
+        git push origin --tags
     fi
 }
 
@@ -131,8 +131,9 @@ function release_gn() {
     git commit --allow-empty -m "build.sh: r-$GN_REVISION"
     git tag r-$GN_REVISION
     git tag $CUR_TAG
+    git push origin r/$GN_REVISION:r/$GN_REVISION
     git checkout main
-    git branch -D r/$GN_REVISION
+    git branch -d r/$GN_REVISION
     echo "build.sh: r-$GN_REVISION"
     
     check_str="Check GN $GN_REVISION vs $(./gn --version)"
@@ -156,8 +157,9 @@ function release_clang() {
     git tag r-$LLVM_REVISION
     git tag $STAMP
     git tag $CUR_TAG
+    git push origin r/$LLVM_REVISION:r/$LLVM_REVISION
     git checkout main
-    git branch -D r/$LLVM_REVISION
+    git branch -d r/$LLVM_REVISION
     echo "build.sh: r-$LLVM_REVISION"
     
     check_str="Check Clang $LLVM_REVISION vs $(clang-$STAMP*/bin/clang --version) vs $STAMP"
