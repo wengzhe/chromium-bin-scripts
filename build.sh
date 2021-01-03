@@ -132,13 +132,14 @@ function release_gn() {
     git tag r-$GN_REVISION
     git tag $CUR_TAG
     git push origin r/$GN_REVISION:r/$GN_REVISION --tags
-    git checkout main
-    git branch -D r/$GN_REVISION
     echo "build.sh: r-$GN_REVISION"
     
     check_str="Check GN $GN_REVISION vs $(./gn --version)"
     echo $check_str
     echo $check_str >> $ROOT_DIR/build.log
+    
+    git checkout main
+    git branch -D r/$GN_REVISION
 }
 
 function release_clang() {
@@ -158,13 +159,14 @@ function release_clang() {
     git tag $STAMP
     git tag $CUR_TAG
     git push origin r/$LLVM_REVISION:r/$LLVM_REVISION --tags
-    git checkout main
-    git branch -D r/$LLVM_REVISION
     echo "build.sh: r-$LLVM_REVISION"
     
     check_str="Check Clang $LLVM_REVISION vs $(clang-$STAMP*/bin/clang --version) vs $STAMP"
     echo $check_str
     echo $check_str >> $ROOT_DIR/build.log
+    
+    git checkout main
+    git branch -D r/$LLVM_REVISION
 }
 
 function build_cur_tag() {
