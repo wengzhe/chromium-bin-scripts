@@ -15,7 +15,6 @@ export BUILD_CLANG=${BUILD_CLANG:-"false"}
 BUILD_TAG_PREFIX=${BUILD_TAG_PREFIX:-""}
 
 # TODO: clang switch - copy folder or tgz - or even split repo
-# TODO: release to branches(or single tag) instead of main branch to allow concurrency
 
 cd "$(dirname "$0")"
 export ROOT_DIR=$(pwd)
@@ -127,10 +126,13 @@ function release_push() {
 function release_gn() {
     cd $GN_RELEASE_DIR
     mv $GN_DIR/out/gn ./
+    git checkout -b r/$GN_REVISION
     git add .
     git commit --allow-empty -m "build.sh: r-$GN_REVISION"
     git tag r-$GN_REVISION
     git tag $CUR_TAG
+    git checkout main
+    git branch -D r/$GN_REVISION
     echo "build.sh: r-$GN_REVISION"
     
     check_str="Check GN $GN_REVISION vs $(./gn --version)"
@@ -148,11 +150,14 @@ function release_clang() {
     cd $CLANG_RELEASE_DIR
     rm -rf clang-*
     mv $CLANG_SCRIPT_DIR/clang-$STAMP* ./
+    git checkout -b r/$LLVM_REVISION
     git add .
     git commit --allow-empty -m "build.sh: r-$LLVM_REVISION"
     git tag r-$LLVM_REVISION
     git tag $STAMP
     git tag $CUR_TAG
+    git checkout main
+    git branch -D r/$LLVM_REVISION
     echo "build.sh: r-$LLVM_REVISION"
     
     check_str="Check Clang $LLVM_REVISION vs $(clang-$STAMP*/bin/clang --version) vs $STAMP"
