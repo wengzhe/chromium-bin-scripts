@@ -15,6 +15,7 @@ export BUILD_CLANG=${BUILD_CLANG:-"false"}
 BUILD_TAG_PREFIX=${BUILD_TAG_PREFIX:-""}
 
 # TODO: clang switch - copy folder or tgz - or even split repo
+# TODO: release to branches(or single tag) instead of main branch to allow concurrency
 
 cd "$(dirname "$0")"
 export ROOT_DIR=$(pwd)
