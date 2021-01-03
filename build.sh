@@ -14,6 +14,8 @@ export BUILD_CLANG=${BUILD_CLANG:-"false"}
 
 BUILD_TAG_PREFIX=${BUILD_TAG_PREFIX:-""}
 
+# TODO: clang switch - copy folder or tgz - or even split repo
+
 cd "$(dirname "$0")"
 export ROOT_DIR=$(pwd)
 
@@ -114,6 +116,9 @@ function tag_exists() {
 
 function release_push() {
     if [ "$GIT_RELEASE" == "true" ]; then
+        cd $GN_RELEASE_DIR
+        git push origin --tags main:main
+        cd $CLANG_RELEASE_DIR
         git push origin --tags main:main
     fi
 }
@@ -130,7 +135,6 @@ function release_gn() {
     check_str="Check GN $GN_REVISION vs $(./gn --version)"
     echo $check_str
     echo $check_str >> $ROOT_DIR/build.log
-    release_push
 }
 
 function release_clang() {
@@ -153,7 +157,6 @@ function release_clang() {
     check_str="Check Clang $LLVM_REVISION vs $(clang-$STAMP*/bin/clang --version) vs $STAMP"
     echo $check_str
     echo $check_str >> $ROOT_DIR/build.log
-    release_push
 }
 
 function build_cur_tag() {
@@ -170,7 +173,6 @@ function build_cur_tag() {
     elif ! tag_exists $GN_RELEASE_DIR $CUR_TAG; then
         cd $GN_RELEASE_DIR
         git tag $CUR_TAG r-$GN_REVISION
-        release_push || exit
     fi
     if [ "$BUILD_CLANG" != "true" ]; then
         echo "Skip CLANG."
@@ -181,7 +183,6 @@ function build_cur_tag() {
     elif ! tag_exists $CLANG_RELEASE_DIR $CUR_TAG; then
         cd $CLANG_RELEASE_DIR
         git tag $CUR_TAG r-$LLVM_REVISION
-        release_push || exit
     fi
 }
 
@@ -202,3 +203,5 @@ else
         LAST_TAG=$CUR_TAG
     done
 fi
+
+release_push
