@@ -131,7 +131,7 @@ function release_gn() {
     git commit --allow-empty -m "build.sh: r-$GN_REVISION"
     git tag r-$GN_REVISION
     git tag $CUR_TAG
-    git push origin r/$GN_REVISION:r/$GN_REVISION
+    git push origin r/$GN_REVISION:r/$GN_REVISION --tags
     git checkout main
     git branch -d r/$GN_REVISION
     echo "build.sh: r-$GN_REVISION"
@@ -157,7 +157,7 @@ function release_clang() {
     git tag r-$LLVM_REVISION
     git tag $STAMP
     git tag $CUR_TAG
-    git push origin r/$LLVM_REVISION:r/$LLVM_REVISION
+    git push origin r/$LLVM_REVISION:r/$LLVM_REVISION --tags
     git checkout main
     git branch -d r/$LLVM_REVISION
     echo "build.sh: r-$LLVM_REVISION"
