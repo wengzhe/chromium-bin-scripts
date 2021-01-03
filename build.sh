@@ -12,7 +12,7 @@ GIT_CLANG_TARGET=${GIT_CLANG_TARGET:-"git@github.com:wengzhe/chromium-clang-bin-
 export BUILD_GN=${BUILD_GN:-"false"}
 export BUILD_CLANG=${BUILD_CLANG:-"false"}
 
-BUILD_TAG=${BUILD_TAG:-""}
+BUILD_TAG_PREFIX=${BUILD_TAG_PREFIX:-""}
 
 cd "$(dirname "$0")"
 export ROOT_DIR=$(pwd)
@@ -185,9 +185,12 @@ function build_cur_tag() {
     fi
 }
 
-if [ "$BUILD_TAG" != "" ]; then
-    export CUR_TAG=$BUILD_TAG
-    build_cur_tag
+if [ "$BUILD_TAG_PREFIX" != "" ]; then
+    cd $CHROMIUM_DIR
+    for cur_tag in `git tag | grep ^${BUILD_TAG_PREFIX}`; do
+        export CUR_TAG=$cur_tag
+        build_cur_tag
+    done
 else
     for ver in {100..77}; do
         cd $CHROMIUM_DIR
