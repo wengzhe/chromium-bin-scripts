@@ -1,13 +1,18 @@
 #!/bin/bash -ex
 
-# TODO: Split GN and Clang build
-# TODO: Split Revision
 GIT_CHROMIUM=${GIT_CHROMIUM:-"https://chromium.googlesource.com/chromium/src.git"}
 GIT_LLVM=${GIT_LLVM:-"https://github.com/llvm/llvm-project"}
 GIT_GN=${GIT_GN:-"https://gn.googlesource.com/gn"}
 GIT_DEPOT_TOOLS=${GIT_DEPOT_TOOLS:-"https://chromium.googlesource.com/chromium/tools/depot_tools.git"}
-GIT_GN_TARGET="git@github.com:wengzhe/google-gn-bin-centos7.git"
-GIT_CLANG_TARGET="git@github.com:wengzhe/chromium-clang-bin-centos7.git"
+
+GIT_RELEASE=${GIT_RELEASE:-"false"}
+GIT_GN_TARGET=${GIT_GN_TARGET:-"git@github.com:wengzhe/google-gn-bin-centos7.git"}
+GIT_CLANG_TARGET=${GIT_CLANG_TARGET:-"git@github.com:wengzhe/chromium-clang-bin-centos7.git"}
+
+export BUILD_GN=${BUILD_GN:-"false"}
+export BUILD_CLANG=${BUILD_CLANG:-"false"}
+
+BUILD_TAG=${BUILD_TAG:-""}
 
 cd "$(dirname "$0")"
 export ROOT_DIR=$(pwd)
@@ -65,7 +70,8 @@ function compile_llvm() {
     cd $CLANG_SCRIPT_DIR
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo || \
+    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts
 }
 
 function compile_gn() {
@@ -107,6 +113,12 @@ function tag_exists() {
     fi
 }
 
+function release_push() {
+    if [ "$GIT_RELEASE" == "true" ]; then
+        git push origin --tags main:main
+    fi
+}
+
 function release_gn() {
     cd $GN_RELEASE_DIR
     mv $GN_DIR/out/gn ./
@@ -119,7 +131,7 @@ function release_gn() {
     check_str="Check GN $GN_REVISION vs $(./gn --version)"
     echo $check_str
     echo $check_str >> $ROOT_DIR/build.log
-    # git push origin --tags main:main || echo "Push failed, skip"
+    release_push
 }
 
 function release_clang() {
@@ -142,34 +154,49 @@ function release_clang() {
     check_str="Check Clang $LLVM_REVISION vs $(clang-$STAMP*/bin/clang --version) vs $STAMP"
     echo $check_str
     echo $check_str >> $ROOT_DIR/build.log
-    # git push origin --tags main:main || echo "Push failed, skip"
+    release_push
 }
 
-
-for ver in {100..76}; do
+function build_cur_tag() {
     cd $CHROMIUM_DIR
-    export CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
-    if [ "$LAST_TAG" != "" ]; then
-        # 需要跳过第一个没有发布的版本
-        git checkout -f $CUR_TAG
-        get_source_version
-        # git checkout -f master
-        if ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
-            compile_gn || exit
-            echo "Releasing GN"
-            release_gn || exit
-        elif ! tag_exists $GN_RELEASE_DIR $CUR_TAG; then
-            cd $GN_RELEASE_DIR
-            git tag $CUR_TAG r-$GN_REVISION
-        fi
-        if ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
-            compile_llvm || exit
-            echo "Releasing CLANG"
-            release_clang || exit
-        elif ! tag_exists $CLANG_RELEASE_DIR $CUR_TAG; then
-            cd $CLANG_RELEASE_DIR
-            git tag $CUR_TAG r-$LLVM_REVISION
-        fi
+    git checkout -f $CUR_TAG
+    get_source_version
+    # git checkout -f master
+    if [ "$BUILD_GN" != "true" ]; then
+        echo "Skip GN."
+    elif ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
+        compile_gn || exit
+        echo "Releasing GN"
+        release_gn || exit
+    elif ! tag_exists $GN_RELEASE_DIR $CUR_TAG; then
+        cd $GN_RELEASE_DIR
+        git tag $CUR_TAG r-$GN_REVISION
+        release_push || exit
     fi
-    LAST_TAG=$CUR_TAG
-done
+    if [ "$BUILD_CLANG" != "true" ]; then
+        echo "Skip CLANG."
+    elif ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
+        compile_llvm || exit
+        echo "Releasing CLANG"
+        release_clang || exit
+    elif ! tag_exists $CLANG_RELEASE_DIR $CUR_TAG; then
+        cd $CLANG_RELEASE_DIR
+        git tag $CUR_TAG r-$LLVM_REVISION
+        release_push || exit
+    fi
+}
+
+if [ "$BUILD_TAG" != "" ]; then
+    export CUR_TAG=$BUILD_TAG
+    build_cur_tag
+else
+    for ver in {100..76}; do
+        cd $CHROMIUM_DIR
+        export CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
+        if [ "$LAST_TAG" != "" ]; then
+            # 需要跳过第一个没有发布的版本
+            build_cur_tag
+        fi
+        LAST_TAG=$CUR_TAG
+    done
+fi
