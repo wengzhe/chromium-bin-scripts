@@ -3,7 +3,7 @@
 GIT_CHROMIUM=${GIT_CHROMIUM:-"https://chromium.googlesource.com/chromium/src.git"}
 GIT_DEPOT_TOOLS=${GIT_DEPOT_TOOLS:-"https://chromium.googlesource.com/chromium/tools/depot_tools.git"}
 
-GIT_LLVM_ORI="https://github.com/llvm/llvm-project"
+GIT_LLVM_ORI="https://github.com/llvm/llvm-project.git"
 GIT_GN_ORI="https://gn.googlesource.com/gn"
 GIT_LLVM=${GIT_LLVM:-$GIT_LLVM_ORI}
 GIT_GN=${GIT_GN:-$GIT_GN_ORI}
