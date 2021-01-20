@@ -1,9 +1,12 @@
 #!/bin/bash -ex
 
 GIT_CHROMIUM=${GIT_CHROMIUM:-"https://chromium.googlesource.com/chromium/src.git"}
-GIT_LLVM=${GIT_LLVM:-"https://github.com/llvm/llvm-project"}
-GIT_GN=${GIT_GN:-"https://gn.googlesource.com/gn"}
 GIT_DEPOT_TOOLS=${GIT_DEPOT_TOOLS:-"https://chromium.googlesource.com/chromium/tools/depot_tools.git"}
+
+GIT_LLVM_ORI="https://github.com/llvm/llvm-project"
+GIT_GN_ORI="https://gn.googlesource.com/gn"
+GIT_LLVM=${GIT_LLVM:-$GIT_LLVM_ORI}
+GIT_GN=${GIT_GN:-$GIT_GN_ORI}
 
 GIT_RELEASE=${GIT_RELEASE:-"false"}
 GIT_GN_TARGET=${GIT_GN_TARGET:-"git@github.com:wengzhe/google-gn-bin-centos7.git"}
@@ -34,11 +37,17 @@ function ensure_dir_with_git_branch() {
     DIR=$1
     GIT=$2
     BRANCH=$3
+    GIT_ORI=$4
     if [ ! -d "./${DIR}" ]; then
         git clone $GIT $DIR
     fi
     pushd $DIR
+    git remote set-url origin $GIT
     git fetch -f --all --tags
+    if [ "$GIT_ORI" != "" ]; then
+        git remote set-url origin $GIT_ORI
+        git fetch -f --all --tags
+    fi
     if [ "$BRANCH" != "" ]; then
         git checkout -f "$BRANCH"
     fi
@@ -68,7 +77,7 @@ function get_source_version() {
 
 function compile_llvm() {
     cd $THIRD_PARTY_DIR
-    ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION
+    ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION $GIT_LLVM_ORI
     cd $CLANG_SCRIPT_DIR
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
@@ -77,7 +86,7 @@ function compile_llvm() {
 
 function compile_gn() {
     cd $SOURCE_DIR
-    ensure_dir_with_git_branch gn $GIT_GN $GN_REVISION
+    ensure_dir_with_git_branch gn $GIT_GN $GN_REVISION $GIT_GN_ORI
     
     export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
     export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
