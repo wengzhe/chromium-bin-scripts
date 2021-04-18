@@ -1,0 +1,12 @@
+branches=(
+r/llvmorg-13-init-3462-gfe5c2c3c
+r/llvmorg-13-init-4330-g08a5277a
+r/llvmorg-13-init-4720-g7bafe336
+r/llvmorg-13-init-6429-g0e92cbd6
+)
+
+for branch in ${branches[@]}; do
+    git checkout lab/$branch
+    git push lab --delete `git tag --points-at HEAD`
+    git push lab --delete $branch
+done

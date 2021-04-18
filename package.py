@@ -193,9 +193,9 @@ def main():
     Tee('Starting build\n', log)
 
     # Do a clobber build.
-    shutil.rmtree(LLVM_BOOTSTRAP_DIR, ignore_errors=True)
-    shutil.rmtree(LLVM_BOOTSTRAP_INSTALL_DIR, ignore_errors=True)
-    shutil.rmtree(LLVM_BUILD_DIR, ignore_errors=True)
+    # shutil.rmtree(LLVM_BOOTSTRAP_DIR, ignore_errors=True)
+    # shutil.rmtree(LLVM_BOOTSTRAP_INSTALL_DIR, ignore_errors=True)
+    # shutil.rmtree(LLVM_BUILD_DIR, ignore_errors=True)
 
     build_cmd = [
         sys.executable,
@@ -207,7 +207,7 @@ def main():
     if sys.platform != 'darwin':
       build_cmd.append('--thinlto')
 
-    TeeCmd(build_cmd, log)
+    # TeeCmd(build_cmd, log)
 
   stamp = open(STAMP_FILE).read().rstrip()
   if stamp != expected_stamp:
@@ -370,6 +370,7 @@ def main():
     ])
 
   # Check all non-glob wanted files exist on disk.
+  want = [w for w in want if 'fuchsia' not in w and 'i386' not in w and 'android' not in w]
   want = [w.replace('$V', RELEASE_VERSION) for w in want]
   for w in want:
     if '*' in w: continue
