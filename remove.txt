@@ -10,3 +10,6 @@ for branch in ${branches[@]}; do
     git push lab --delete `git tag --points-at HEAD`
     git push lab --delete $branch
 done
+
+git reflog expire --expire-unreachable=now --all
+git gc --prune=now
