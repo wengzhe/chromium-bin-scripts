@@ -11,12 +11,14 @@ from __future__ import print_function
 import argparse
 import fnmatch
 import itertools
+import multiprocessing.dummy
 import os
 import platform
 import shutil
 import subprocess
 import sys
 import tarfile
+import time
 
 from update import RELEASE_VERSION, STAMP_FILE
 
@@ -128,31 +130,34 @@ def UploadPDBsToSymbolServer(binaries):
   sys.path.insert(0, os.path.join(CHROMIUM_DIR, 'tools', 'symsrc'))
   import img_fingerprint, pdb_fingerprint_from_img
 
+  files = []
   for binary_path in binaries:
     binary_path = os.path.join(LLVM_RELEASE_DIR, binary_path)
     binary_id = img_fingerprint.GetImgFingerprint(binary_path)
     (pdb_id, pdb_path) = pdb_fingerprint_from_img.GetPDBInfoFromImg(binary_path)
+    files += [(binary_path, binary_id), (pdb_path, pdb_id)]
 
     # The build process builds clang.exe and then copies it to clang-cl.exe
     # (both are the same binary and they behave differently on what their
     # filename is).  Hence, the pdb is at clang.pdb, not at clang-cl.pdb.
     # Likewise, lld-link.exe's PDB file is called lld.pdb.
 
-    # Compress and upload.
-    for f, f_id in ((binary_path, binary_id), (pdb_path, pdb_id)):
-      subprocess.check_call(
-          ['makecab', '/D', 'CompressionType=LZX', '/D', 'CompressionMemory=21',
-           f, '/L', os.path.dirname(f)], stdout=open(os.devnull, 'w'))
-      f_cab = f[:-1] + '_'
-
-      dest = '%s/%s/%s' % (os.path.basename(f), f_id, os.path.basename(f_cab))
-      print('Uploading %s to Google Cloud Storage...' % dest)
-      gsutil_args = ['cp', '-n', '-a', 'public-read', f_cab,
-                     'gs://chromium-browser-symsrv/' + dest]
-      exit_code = RunGsutil(gsutil_args)
-      if exit_code != 0:
-        print("gsutil failed, exit_code: %s" % exit_code)
-        sys.exit(exit_code)
+  # Compress and upload.
+  def compress(t):
+    subprocess.check_call(
+      ['makecab', '/D', 'CompressionType=LZX', '/D', 'CompressionMemory=21',
+       t[0], '/L', os.path.dirname(t[0])], stdout=open(os.devnull, 'w'))
+  multiprocessing.dummy.Pool().map(compress, files)
+  for f, f_id in files:
+    f_cab = f[:-1] + '_'
+    dest = '%s/%s/%s' % (os.path.basename(f), f_id, os.path.basename(f_cab))
+    print('Uploading %s to Google Cloud Storage...' % dest)
+    gsutil_args = ['cp', '-n', '-a', 'public-read', f_cab,
+                   'gs://chromium-browser-symsrv/' + dest]
+    exit_code = RunGsutil(gsutil_args)
+    if exit_code != 0:
+      print("gsutil failed, exit_code: %s" % exit_code)
+      sys.exit(exit_code)
 
 
 def main():
@@ -226,8 +231,8 @@ def main():
     'bin/llvm-undname' + exe_ext,
     # Copy built-in headers (lib/clang/3.x.y/include).
     'lib/clang/$V/include/*',
-    'lib/clang/$V/share/asan_blacklist.txt',
-    'lib/clang/$V/share/cfi_blacklist.txt',
+    'lib/clang/$V/share/asan_*list.txt',
+    'lib/clang/$V/share/cfi_*list.txt',
   ]
   if sys.platform == 'win32':
     want.extend([
@@ -238,14 +243,23 @@ def main():
     want.extend([
       'bin/clang',
 
+      # Add LLD.
+      'bin/lld',
+
+      # Add llvm-ar for LTO.
+      'bin/llvm-ar',
+
       # Include libclang_rt.builtins.a for Fuchsia targets.
-      'lib/clang/$V/lib/aarch64-fuchsia/libclang_rt.builtins.a',
-      'lib/clang/$V/lib/x86_64-fuchsia/libclang_rt.builtins.a',
+      'lib/clang/$V/lib/aarch64-unknown-fuchsia/libclang_rt.builtins.a',
+      'lib/clang/$V/lib/x86_64-unknown-fuchsia/libclang_rt.builtins.a',
     ])
     if not args.build_mac_arm:
       # TODO(thakis): Figure out why this doesn't build in --build-mac-arm
       # builds.
-      want.append('lib/clang/$V/lib/x86_64-fuchsia/libclang_rt.profile.a')
+      want.append('lib/clang/$V/lib/x86_64-unknown-fuchsia/libclang_rt.profile.a')
+    if sys.platform != 'darwin':
+      # The Fuchsia asan runtime is only built on non-Mac platforms.
+      want.append('lib/clang/$V/lib/x86_64-unknown-fuchsia/libclang_rt.asan.so')
   if sys.platform == 'darwin':
     want.extend([
       # AddressSanitizer runtime.
@@ -270,12 +284,6 @@ def main():
     want.extend([
         # Copy the stdlibc++.so.6 we linked the binaries against.
         'lib/libstdc++.so.6',
-
-        # Add LLD.
-        'bin/lld',
-
-        # Add llvm-ar for LTO.
-        'bin/llvm-ar',
 
         # Add llvm-objcopy for partition extraction on Android.
         'bin/llvm-objcopy',
@@ -337,8 +345,8 @@ def main():
         'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-aarch64-android.so',
         'lib/clang/$V/lib/linux/libclang_rt.ubsan_standalone-arm-android.so',
 
-        # Blacklist for MemorySanitizer (used on Linux only).
-        'lib/clang/$V/share/msan_blacklist.txt',
+        # Ignorelist for MemorySanitizer (used on Linux only).
+        'lib/clang/$V/share/msan_*list.txt',
     ])
   elif sys.platform == 'win32':
     want.extend([
@@ -401,14 +409,21 @@ def main():
         subprocess.call([EU_STRIP, '-g', dest])
 
   stripped_binaries = ['clang',
+                       'clang-tidy',
+                       'lld',
+                       'llvm-ar',
+                       'llvm-bcanalyzer',
+                       'llvm-cov',
+                       'llvm-cxxfilt',
+                       'llvm-nm',
+                       'llvm-objcopy',
+                       'llvm-objdump',
                        'llvm-pdbutil',
+                       'llvm-profdata',
+                       'llvm-readobj',
                        'llvm-symbolizer',
                        'llvm-undname',
                        ]
-  if sys.platform.startswith('linux'):
-    stripped_binaries.append('lld')
-    stripped_binaries.append('llvm-ar')
-    stripped_binaries.append('llvm-objcopy')
   for f in stripped_binaries:
     if sys.platform != 'win32':
       subprocess.call(['strip', os.path.join(pdir, 'bin', f)])
@@ -417,11 +432,12 @@ def main():
   if sys.platform != 'win32':
     os.symlink('clang', os.path.join(pdir, 'bin', 'clang++'))
     os.symlink('clang', os.path.join(pdir, 'bin', 'clang-cl'))
-
-  if sys.platform.startswith('linux'):
     os.symlink('lld', os.path.join(pdir, 'bin', 'ld.lld'))
     os.symlink('lld', os.path.join(pdir, 'bin', 'ld64.lld'))
     os.symlink('lld', os.path.join(pdir, 'bin', 'lld-link'))
+    os.symlink('lld', os.path.join(pdir, 'bin', 'wasm-ld'))
+
+  if sys.platform.startswith('linux'):
     os.symlink('llvm-objcopy', os.path.join(pdir, 'bin', 'llvm-strip'))
 
   # Copy libc++ headers.
@@ -472,6 +488,7 @@ def main():
     f.write(expected_stamp)
     f.write('\n')
   if sys.platform != 'win32':
+    os.symlink('llvm-objdump', os.path.join(objdumpdir, 'bin', 'llvm-otool'))
     os.symlink('llvm-readobj', os.path.join(objdumpdir, 'bin', 'llvm-readelf'))
   with tarfile.open(objdumpdir + '.tgz', 'w:gz') as tar:
     tar.add(os.path.join(objdumpdir, 'bin'), arcname='bin',
@@ -491,25 +508,8 @@ def main():
             filter=PrintTarProgress)
   MaybeUpload(args.upload, clang_tidy_dir + '.tgz', gcs_platform)
 
-  # On Mac, lld isn't part of the main zip.  Upload it in a separate zip.
   if sys.platform == 'darwin':
-    llddir = 'lld-' + stamp
-    shutil.rmtree(llddir, ignore_errors=True)
-    os.makedirs(os.path.join(llddir, 'bin'))
-    shutil.copy(os.path.join(LLVM_RELEASE_DIR, 'bin', 'lld'),
-                os.path.join(llddir, 'bin'))
-    shutil.copy(os.path.join(LLVM_RELEASE_DIR, 'bin', 'llvm-ar'),
-                os.path.join(llddir, 'bin'))
-    os.symlink('lld', os.path.join(llddir, 'bin', 'ld.lld'))
-    os.symlink('lld', os.path.join(llddir, 'bin', 'ld64.lld'))
-    os.symlink('lld', os.path.join(llddir, 'bin', 'ld64.lld.darwinnew'))
-    os.symlink('lld', os.path.join(llddir, 'bin', 'lld-link'))
-    with tarfile.open(llddir + '.tgz', 'w:gz') as tar:
-      tar.add(os.path.join(llddir, 'bin'), arcname='bin',
-              filter=PrintTarProgress)
-    MaybeUpload(args.upload, llddir + '.tgz', gcs_platform)
-
-    # dsymutil isn't part of the main zip either, and it gets periodically
+    # dsymutil isn't part of the main zip, and it gets periodically
     # deployed to CIPD (manually, not as part of clang rolls) for use in the
     # Mac build toolchain.
     dsymdir = 'dsymutil-' + stamp
@@ -557,7 +557,10 @@ def main():
     binaries = [f for f in want if f.endswith('.exe') or f.endswith('.dll')]
     assert 'bin/clang-cl.exe' in binaries
     assert 'bin/lld-link.exe' in binaries
+    start = time.time()
     UploadPDBsToSymbolServer(binaries)
+    end = time.time()
+    print('symbol upload took', end - start, 'seconds')
 
   # FIXME: Warn if the file already exists on the server.
 
