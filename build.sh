@@ -33,6 +33,13 @@ fi
 export SOURCE_DIR=$ROOT_DIR/src_dir
 export RELEASE_DIR=$ROOT_DIR/release
 
+function get_chromium_by_http() {
+    if [ ! -d "./chromium" ]; then
+        wget http://202.38.101.25/img/chromium.tar
+        tar xf chromium.tar && rm chromium.tar
+    fi
+}
+
 function ensure_dir_with_git_branch() {
     DIR=$1
     GIT=$2
@@ -58,11 +65,12 @@ function ensure_dir_with_git_branch() {
     popd
 }
 
-ensure_dir_with_git_branch depot_tools $GIT_DEPOT_TOOLS master
+ensure_dir_with_git_branch depot_tools $GIT_DEPOT_TOOLS main
 export PATH="$PATH:$ROOT_DIR/depot_tools"
 
 cd $SOURCE_DIR
-ensure_dir_with_git_branch chromium $GIT_CHROMIUM master
+# get_chromium_by_http
+ensure_dir_with_git_branch chromium $GIT_CHROMIUM main
 
 export CHROMIUM_DIR=$SOURCE_DIR/chromium
 export GN_DIR=$SOURCE_DIR/gn
