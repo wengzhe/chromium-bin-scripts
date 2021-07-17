@@ -198,9 +198,9 @@ def main():
     Tee('Starting build\n', log)
 
     # Do a clobber build.
-    shutil.rmtree(LLVM_BOOTSTRAP_DIR, ignore_errors=True)
-    shutil.rmtree(LLVM_BOOTSTRAP_INSTALL_DIR, ignore_errors=True)
-    shutil.rmtree(LLVM_BUILD_DIR, ignore_errors=True)
+    # shutil.rmtree(LLVM_BOOTSTRAP_DIR, ignore_errors=True)
+    # shutil.rmtree(LLVM_BOOTSTRAP_INSTALL_DIR, ignore_errors=True)
+    # shutil.rmtree(LLVM_BUILD_DIR, ignore_errors=True)
 
     build_cmd = [
         sys.executable,
@@ -212,7 +212,7 @@ def main():
     if sys.platform != 'darwin':
       build_cmd.append('--thinlto')
 
-    TeeCmd(build_cmd, log)
+    # TeeCmd(build_cmd, log)
 
   stamp = open(STAMP_FILE).read().rstrip()
   if stamp != expected_stamp:
@@ -249,6 +249,12 @@ def main():
       # Add llvm-ar for LTO.
       'bin/llvm-ar',
 
+      # Add llvm-objcopy for partition extraction on Android.
+      'bin/llvm-objcopy',
+
+      # Add llvm-nm.
+      'bin/llvm-nm',
+
       # Include libclang_rt.builtins.a for Fuchsia targets.
       'lib/clang/$V/lib/aarch64-unknown-fuchsia/libclang_rt.builtins.a',
       'lib/clang/$V/lib/x86_64-unknown-fuchsia/libclang_rt.builtins.a',
@@ -284,12 +290,6 @@ def main():
     want.extend([
         # Copy the stdlibc++.so.6 we linked the binaries against.
         'lib/libstdc++.so.6',
-
-        # Add llvm-objcopy for partition extraction on Android.
-        'bin/llvm-objcopy',
-
-        # Add llvm-nm.
-        'bin/llvm-nm',
 
         # AddressSanitizer C runtime (pure C won't link with *_cxx).
         'lib/clang/$V/lib/linux/libclang_rt.asan-i386.a',
@@ -378,6 +378,7 @@ def main():
     ])
 
   # Check all non-glob wanted files exist on disk.
+  want = [w for w in want if 'fuchsia' not in w and 'ios' not in w]
   want = [w.replace('$V', RELEASE_VERSION) for w in want]
   for w in want:
     if '*' in w: continue
@@ -436,8 +437,7 @@ def main():
     os.symlink('lld', os.path.join(pdir, 'bin', 'lld-link'))
     os.symlink('lld', os.path.join(pdir, 'bin', 'wasm-ld'))
 
-  if sys.platform.startswith('linux'):
-    os.symlink('llvm-objcopy', os.path.join(pdir, 'bin', 'llvm-strip'))
+  os.symlink('llvm-objcopy', os.path.join(pdir, 'bin', 'llvm-strip'))
 
   # Copy libc++ headers.
   if sys.platform == 'darwin':

@@ -9,7 +9,6 @@ GIT_LLVM=${GIT_LLVM:-$GIT_LLVM_ORI}
 GIT_RELEASE=${GIT_RELEASE:-"false"}
 GIT_CLANG_TARGET=${GIT_CLANG_TARGET:-"git@github.com:wengzhe/chromium-clang-bin-macos.git"}
 
-export BUILD_GN=${BUILD_GN:-"false"}
 export BUILD_CLANG=${BUILD_CLANG:-"false"}
 
 BUILD_TAG_PREFIX=${BUILD_TAG_PREFIX:-""}
@@ -104,8 +103,6 @@ function tag_exists() {
 
 function release_push() {
     if [ "$GIT_RELEASE" == "true" ]; then
-        cd $GN_RELEASE_DIR
-        git push origin --tags
         cd $CLANG_RELEASE_DIR
         git push origin --tags
     fi
