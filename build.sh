@@ -4,13 +4,10 @@ GIT_CHROMIUM=${GIT_CHROMIUM:-"https://chromium.googlesource.com/chromium/src.git
 GIT_DEPOT_TOOLS=${GIT_DEPOT_TOOLS:-"https://chromium.googlesource.com/chromium/tools/depot_tools.git"}
 
 GIT_LLVM_ORI="https://github.com/llvm/llvm-project/"
-GIT_GN_ORI="https://gn.googlesource.com/gn"
 GIT_LLVM=${GIT_LLVM:-$GIT_LLVM_ORI}
-GIT_GN=${GIT_GN:-$GIT_GN_ORI}
 
 GIT_RELEASE=${GIT_RELEASE:-"false"}
-GIT_GN_TARGET=${GIT_GN_TARGET:-"git@github.com:wengzhe/google-gn-bin-centos7.git"}
-GIT_CLANG_TARGET=${GIT_CLANG_TARGET:-"git@github.com:wengzhe/chromium-clang-bin-centos7.git"}
+GIT_CLANG_TARGET=${GIT_CLANG_TARGET:-"git@github.com:wengzhe/chromium-clang-bin-macos.git"}
 
 export BUILD_GN=${BUILD_GN:-"false"}
 export BUILD_CLANG=${BUILD_CLANG:-"false"}
@@ -73,14 +70,12 @@ cd $SOURCE_DIR
 ensure_dir_with_git_branch chromium $GIT_CHROMIUM main
 
 export CHROMIUM_DIR=$SOURCE_DIR/chromium
-export GN_DIR=$SOURCE_DIR/gn
 export CLANG_SCRIPT_DIR=$CHROMIUM_DIR/tools/clang/scripts
 export THIRD_PARTY_DIR=$CHROMIUM_DIR/third_party
 export LLVM_BUILD_DIR=$THIRD_PARTY_DIR/llvm-build/Release+Asserts
 
 function get_source_version() {
     export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^']*"`
-    export GN_REVISION=`grep gn_version $CHROMIUM_DIR/DEPS | grep -o 'git_revision:\([0-9a-z]*\)' | cut -d: -f2`
 }
 
 function compile_llvm() {
@@ -92,30 +87,8 @@ function compile_llvm() {
     python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
 }
 
-function compile_gn() {
-    cd $SOURCE_DIR
-    ensure_dir_with_git_branch gn $GIT_GN $GN_REVISION $GIT_GN_ORI
-    
-    export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
-    export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
-    export LDFLAGS=-lrt
-    
-    cd gn
-    python build/gen.py
-    if ninja -C out; then
-        out/gn_unittests
-    else
-        echo "Build Failed, skip"
-        return 1
-    fi
-    return 0
-}
-
-
 cd $RELEASE_DIR
-ensure_dir_with_git_branch gn $GIT_GN_TARGET main
 ensure_dir_with_git_branch clang $GIT_CLANG_TARGET main
-export GN_RELEASE_DIR=$RELEASE_DIR/gn
 export CLANG_RELEASE_DIR=$RELEASE_DIR/clang
 
 
@@ -138,25 +111,6 @@ function release_push() {
         cd $CLANG_RELEASE_DIR
         git push origin --tags
     fi
-}
-
-function release_gn() {
-    cd $GN_RELEASE_DIR
-    mv $GN_DIR/out/gn ./
-    git checkout -b r/$GN_REVISION
-    git add .
-    git commit --allow-empty -m "build.sh: r-$GN_REVISION"
-    git tag r-$GN_REVISION
-    git tag $CUR_TAG
-    git push origin r/$GN_REVISION:r/$GN_REVISION --tags
-    echo "build.sh: r-$GN_REVISION"
-    
-    check_str="Check GN $GN_REVISION vs $(./gn --version)"
-    echo $check_str
-    echo $check_str >> $ROOT_DIR/build.log
-    
-    git checkout main
-    git branch -D r/$GN_REVISION
 }
 
 function release_clang() {
@@ -191,16 +145,6 @@ function build_cur_tag() {
     git checkout -f $CUR_TAG
     get_source_version
     # git checkout -f master
-    if [ "$BUILD_GN" != "true" ]; then
-        echo "Skip GN."
-    elif ! tag_exists $GN_RELEASE_DIR r-$GN_REVISION; then
-        compile_gn || exit
-        echo "Releasing GN"
-        release_gn || exit
-    elif ! tag_exists $GN_RELEASE_DIR $CUR_TAG; then
-        cd $GN_RELEASE_DIR
-        git tag $CUR_TAG r-$GN_REVISION
-    fi
     if [ "$BUILD_CLANG" != "true" ]; then
         echo "Skip CLANG."
     elif ! tag_exists $CLANG_RELEASE_DIR r-$LLVM_REVISION; then
