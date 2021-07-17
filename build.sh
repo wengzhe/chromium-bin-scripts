@@ -82,9 +82,7 @@ function compile_llvm() {
     cd $THIRD_PARTY_DIR
     ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION $GIT_LLVM_ORI
     cd $CLANG_SCRIPT_DIR
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
+    python build.py --without-android --without-fuchsia --skip-checkout --bootstrap --disable-asserts --pgo
 }
 
 cd $RELEASE_DIR
