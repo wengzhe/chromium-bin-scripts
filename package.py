@@ -378,7 +378,7 @@ def main():
     ])
 
   # Check all non-glob wanted files exist on disk.
-  want = [w for w in want if 'fuchsia' not in w and 'i386' not in w and 'android' not in w]
+  want = [w for w in want if 'fuchsia' not in w and 'ios' not in w]
   want = [w.replace('$V', RELEASE_VERSION) for w in want]
   for w in want:
     if '*' in w: continue
