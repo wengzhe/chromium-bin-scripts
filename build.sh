@@ -75,7 +75,7 @@ export THIRD_PARTY_DIR=$CHROMIUM_DIR/third_party
 export LLVM_BUILD_DIR=$THIRD_PARTY_DIR/llvm-build/Release+Asserts
 
 function get_source_version() {
-    export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^']*"`
+    export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^'].*[^']"`
 }
 
 function compile_llvm() {
