@@ -10,6 +10,7 @@ GIT_RELEASE=${GIT_RELEASE:-"false"}
 GIT_CLANG_TARGET=${GIT_CLANG_TARGET:-"git@github.com:wengzhe/chromium-clang-bin-macos.git"}
 
 export BUILD_CLANG=${BUILD_CLANG:-"false"}
+export RUN_TESTS=${RUN_TESTS:-"false"}
 
 BUILD_TAG_PREFIX=${BUILD_TAG_PREFIX:-""}
 
@@ -77,11 +78,16 @@ function get_source_version() {
     export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^'].*[^']"`
 }
 
+export CLANG_PARAMS=""
+if [ "$RUN_TESTS" == "true" ]; then
+    export CLANG_PARAMS="$CLANG_PARAMS --run-tests"
+fi
+
 function compile_llvm() {
     cd $THIRD_PARTY_DIR
     ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION $GIT_LLVM_ORI
     cd $CLANG_SCRIPT_DIR
-    python build.py --without-android --without-fuchsia --skip-checkout --bootstrap --disable-asserts --pgo
+    python build.py --without-android --without-fuchsia --skip-checkout --bootstrap --disable-asserts --pgo $CLANG_PARAMS
 }
 
 cd $RELEASE_DIR
