@@ -58,7 +58,7 @@ function ensure_dir_with_git_branch() {
     if [ "$BRANCH" != "" ]; then
         git checkout -f "$BRANCH"
     fi
-    git pull -f
+    git pull -f || (git reset --hard "origin/$BRANCH" && git pull -f)
     if [ "$BRANCH" != "" ]; then
         git checkout -f "$BRANCH"
     fi
