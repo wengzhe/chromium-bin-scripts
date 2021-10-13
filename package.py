@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) 2015 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -53,7 +53,7 @@ def TeeCmd(cmd, logfile, fail_hard=True):
                           stdin=open(os.devnull), stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
   for line in iter(proc.stdout.readline,''):
-    Tee(line, logfile)
+    Tee(str(line.decode()), logfile)
     if proc.poll() is not None:
       break
   exit_code = proc.wait()
@@ -70,7 +70,7 @@ def PrintTarProgress(tarinfo):
 def GetExpectedStamp():
   rev_cmd = [sys.executable, os.path.join(THIS_DIR, 'update.py'),
              '--print-revision']
-  return subprocess.check_output(rev_cmd).rstrip()
+  return str(subprocess.check_output(rev_cmd).decode()).rstrip()
 
 
 def GetGsutilPath():
@@ -272,6 +272,9 @@ def main():
       # Include libclang_rt.builtins.a for Fuchsia targets.
       'lib/clang/$V/lib/aarch64-unknown-fuchsia/libclang_rt.builtins.a',
       'lib/clang/$V/lib/x86_64-unknown-fuchsia/libclang_rt.builtins.a',
+
+      # Add llvm-readobj (symlinked from llvm-readelf) for extracting SONAMEs.
+      'bin/llvm-readobj',
     ])
     if not args.build_mac_arm:
       # TODO(thakis): Figure out why this doesn't build in --build-mac-arm
@@ -440,6 +443,7 @@ def main():
     os.symlink('lld', os.path.join(pdir, 'bin', 'ld64.lld'))
     os.symlink('lld', os.path.join(pdir, 'bin', 'lld-link'))
     os.symlink('lld', os.path.join(pdir, 'bin', 'wasm-ld'))
+    os.symlink('llvm-readobj', os.path.join(pdir, 'bin', 'llvm-readelf'))
 
   os.symlink('llvm-objcopy', os.path.join(pdir, 'bin', 'llvm-strip'))
 
@@ -476,7 +480,7 @@ def main():
   os.makedirs(os.path.join(objdumpdir, 'bin'))
   for filename in [
       'llvm-bcanalyzer', 'llvm-cxxfilt', 'llvm-dwarfdump', 'llvm-nm',
-      'llvm-objdump', 'llvm-readobj'
+      'llvm-objdump'
   ]:
     shutil.copy(os.path.join(LLVM_RELEASE_DIR, 'bin', filename + exe_ext),
                 os.path.join(objdumpdir, 'bin'))
@@ -487,7 +491,6 @@ def main():
     f.write('\n')
   if sys.platform != 'win32':
     os.symlink('llvm-objdump', os.path.join(objdumpdir, 'bin', 'llvm-otool'))
-    os.symlink('llvm-readobj', os.path.join(objdumpdir, 'bin', 'llvm-readelf'))
   PackageInArchive(objdumpdir, objdumpdir + '.tgz')
   MaybeUpload(args.upload, objdumpdir + '.tgz', gcs_platform)
 
