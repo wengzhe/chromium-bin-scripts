@@ -263,6 +263,9 @@ def main():
       # Add llvm-ar for LTO.
       'bin/llvm-ar',
 
+      # dwp needed for use_debug_fission.
+      'bin/llvm-dwp',
+
       # Add llvm-objcopy for partition extraction on Android.
       'bin/llvm-objcopy',
 
