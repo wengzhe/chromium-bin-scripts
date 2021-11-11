@@ -87,9 +87,9 @@ function compile_llvm() {
     cd $THIRD_PARTY_DIR
     ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION $GIT_LLVM_ORI
     cd $CLANG_SCRIPT_DIR
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
-    python build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
 }
 
 function compile_gn() {
@@ -101,7 +101,7 @@ function compile_gn() {
     export LDFLAGS=-lrt
     
     cd gn
-    python build/gen.py
+    python3 build/gen.py
     if ninja -C out; then
         out/gn_unittests
     else
@@ -163,8 +163,8 @@ function release_clang() {
     cd $CLANG_SCRIPT_DIR
     cp $ROOT_DIR/package.py ./
     rm -rf clang-*
-    python package.py
-    STAMP=$(python update.py --print-revision)
+    python3 package.py
+    STAMP=$(python3 update.py --print-revision)
     
     cd $CLANG_RELEASE_DIR
     rm -rf clang-*
