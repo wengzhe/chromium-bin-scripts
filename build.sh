@@ -115,12 +115,29 @@ function release_clang() {
     cd $CLANG_SCRIPT_DIR
     cp $ROOT_DIR/package.py ./
     rm -rf clang-*
+    rm -rf dsymutil-*
+    rm -rf libclang-*
+    rm -rf llvm-code-coverage-*
+    rm -rf llvmobjdump-*
+    rm -rf translation_unit-*
     python3 package.py
     STAMP=$(python3 update.py --print-revision)
     
     cd $CLANG_RELEASE_DIR
     rm -rf clang-*
     mv $CLANG_SCRIPT_DIR/clang-$STAMP* ./
+    rm -rf clang-tidy-*
+    mv $CLANG_SCRIPT_DIR/clang-tidy-$STAMP* ./
+    rm -rf dsymutil-*
+    mv $CLANG_SCRIPT_DIR/dsymutil-$STAMP* ./
+    rm -rf libclang-*
+    mv $CLANG_SCRIPT_DIR/libclang-$STAMP* ./
+    rm -rf llvm-code-coverage-*
+    mv $CLANG_SCRIPT_DIR/llvm-code-coverage-$STAMP* ./
+    rm -rf llvmobjdump-*
+    mv $CLANG_SCRIPT_DIR/llvmobjdump-$STAMP* ./
+    rm -rf translation_unit-*
+    mv $CLANG_SCRIPT_DIR/translation_unit-$STAMP* ./
     git checkout -b r/$LLVM_REVISION
     git add .
     git commit --allow-empty -m "build.sh: r-$LLVM_REVISION"
