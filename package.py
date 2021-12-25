@@ -235,7 +235,7 @@ def main():
 
   shutil.rmtree(pdir, ignore_errors=True)
 
-  # Copy a whitelist of files to the directory we're going to tar up.
+  # Copy a list of files to the directory we're going to tar up.
   # This supports the same patterns that the fnmatch module understands.
   # '$V' is replaced by RELEASE_VERSION further down.
   exe_ext = '.exe' if sys.platform == 'win32' else ''
@@ -262,9 +262,6 @@ def main():
 
       # Add llvm-ar for LTO.
       'bin/llvm-ar',
-
-      # dwp needed for use_debug_fission.
-      'bin/llvm-dwp',
 
       # Add llvm-objcopy for partition extraction on Android.
       'bin/llvm-objcopy',
@@ -409,7 +406,24 @@ def main():
       'lib/clang/$V/lib/windows/clang_rt.ubsan_standalone_cxx-x86_64.lib',
     ])
 
-  # Check all non-glob wanted files exist on disk.
+  # reclient is a tool for executing programs remotely. When uploading the
+  # binary to be executed, it needs to know which other files the binary depends
+  # on. This can include shared libraries, as well as other dependencies not
+  # explicitly mentioned in the source code (those would be found by reclient's
+  # include scanner) such as sanitizer ignore lists.
+  reclient_inputs = {
+      'clang': [
+        'lib/clang/$V/share/asan_*list.txt',
+        'lib/clang/$V/share/cfi_*list.txt',
+      ],
+      'lld': [
+      ],
+  }
+  if sys.platform.startswith('linux'):
+    reclient_inputs['clang'].append('lib/libstdc++.so.6')
+    reclient_inputs['lld'].append('lib/libstdc++.so.6')
+
+  # Check that all non-glob wanted files exist on disk.
   want = [w for w in want if 'fuchsia' not in w and 'ios' not in w]
   want = [w.replace('$V', RELEASE_VERSION) for w in want]
   for w in want:
@@ -418,9 +432,21 @@ def main():
     print('wanted file "%s" but it did not exist' % w, file=sys.stderr)
     return 1
 
+  # Check that all reclient inputs are in the package.
+  for tool in reclient_inputs:
+    reclient_inputs[tool] = [i.replace('$V', RELEASE_VERSION)
+                             for i in reclient_inputs[tool]]
+    missing = set(reclient_inputs[tool]) - set(want)
+    if missing:
+      print('reclient inputs not part of package: ', missing, file=sys.stderr)
+      return 1
+
+  reclient_input_strings = {t: '' for t in reclient_inputs}
+
   # TODO(thakis): Try walking over want and copying the files in there instead
   # of walking the directory and doing fnmatch() against want.
   for root, dirs, files in os.walk(LLVM_RELEASE_DIR):
+    dirs.sort()  # Walk dirs in sorted order.
     # root: third_party/llvm-build/Release+Asserts/lib/..., rel_root: lib/...
     rel_root = root[len(LLVM_RELEASE_DIR)+1:]
     rel_files = [os.path.join(rel_root, f) for f in files]
@@ -429,7 +455,7 @@ def main():
     if wanted_files:
       # Guaranteed to not yet exist at this point:
       os.makedirs(os.path.join(pdir, rel_root))
-    for f in wanted_files:
+    for f in sorted(wanted_files):
       src = os.path.join(LLVM_RELEASE_DIR, f)
       dest = os.path.join(pdir, f)
       shutil.copy(src, dest)
@@ -439,6 +465,18 @@ def main():
       elif (sys.platform.startswith('linux') and
             os.path.splitext(f)[1] in ['.so', '.a']):
         subprocess.call([EU_STRIP, '-g', dest])
+      # If this is an reclient input, add it to the inputs file(s).
+      for tool, inputs in reclient_inputs.items():
+        if any(fnmatch.fnmatch(f, i) for i in inputs):
+          rel_input = os.path.relpath(dest, os.path.join(pdir, 'bin'))
+          reclient_input_strings[tool] += ('%s\n' % rel_input)
+
+  # Write the reclient inputs files.
+  for tool, string in reclient_input_strings.items():
+    filename = os.path.join(pdir, 'bin', '%s_remote_toolchain_inputs' % tool)
+    print('%s:\n%s' % (filename, string))
+    with open(filename, 'w') as f:
+      f.write(string)
 
   # Set up symlinks.
   if sys.platform != 'win32':
@@ -507,6 +545,33 @@ def main():
               os.path.join(clang_tidy_dir, 'bin'))
   PackageInArchive(clang_tidy_dir, clang_tidy_dir + '.tgz')
   MaybeUpload(args.upload, clang_tidy_dir + '.tgz', gcs_platform)
+
+  # Zip up clang-libs for users who opt into it. We want the clang
+  # headers as well as the static libraries.
+  clang_libs_dir = 'clang-libs-' + stamp
+  shutil.rmtree(clang_libs_dir, ignore_errors=True)
+  os.makedirs(os.path.join(clang_libs_dir, 'include'))
+  # TODO(danakj): It's possible we need to also include headers from
+  # LLVM_DIR/clang/lib/AST/ and other subdirs of lib, but we won't include them
+  # unless we see it's needed, and we can document why.
+  shutil.copytree(os.path.join(LLVM_DIR, 'clang', 'include', 'clang'),
+                  os.path.join(clang_libs_dir, 'include', 'clang'))
+  os.makedirs(os.path.join(clang_libs_dir, 'lib'))
+  if sys.platform == 'win32':
+    clang_libs_want = [
+        '*.lib',
+    ]
+  else:
+    clang_libs_want = [
+        '*.a',
+    ]
+  for lib_path in os.listdir(os.path.join(LLVM_RELEASE_DIR, 'lib')):
+    for lib_want in clang_libs_want:
+      if fnmatch.fnmatch(lib_path, lib_want):
+        shutil.copy(os.path.join(LLVM_RELEASE_DIR, 'lib', lib_path),
+                    os.path.join(clang_libs_dir, 'lib'))
+  PackageInArchive(clang_libs_dir, clang_libs_dir + '.tgz')
+  MaybeUpload(args.upload, clang_libs_dir + '.tgz', gcs_platform)
 
   if sys.platform == 'darwin':
     # dsymutil isn't part of the main zip, and it gets periodically
