@@ -118,7 +118,7 @@ function release_clang() {
     cd $CLANG_SCRIPT_DIR
     cp $ROOT_DIR/package.py ./
     rm -rf clang-*
-    python3 package.py
+    python3 package.py || exit
     STAMP=$(python3 update.py --print-revision)
     
     cd $CLANG_RELEASE_DIR
