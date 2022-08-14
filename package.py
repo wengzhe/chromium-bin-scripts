@@ -463,8 +463,8 @@ def main():
     print('wanted file "%s" but it did not exist' % w, file=sys.stderr)
     found_all_wanted_files = False
 
-  if not found_all_wanted_files:
-    return 1
+  # if not found_all_wanted_files:
+  #   return 1
 
   # Check that all reclient inputs are in the package.
   for tool in reclient_inputs:
