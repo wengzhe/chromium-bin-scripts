@@ -87,6 +87,9 @@ function compile_llvm() {
     cd $THIRD_PARTY_DIR
     ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION $GIT_LLVM_ORI
     cd $CLANG_SCRIPT_DIR
+    # workaround for downloading pgo_training-1.ii
+    git log | grep 5f4bbf82717d07b0f || git cherry-pick 5f4bbf82717d07b0f
+    git log | grep 3501c0afd415c16d5 || git cherry-pick 3501c0afd415c16d5
     python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
     python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
     python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
