@@ -225,7 +225,7 @@ if [ "$BUILD_TAG_PREFIX" != "" ]; then
         build_cur_tag
     done
 else
-    for ver in {100..77}; do
+    for ver in {200..77}; do
         cd $CHROMIUM_DIR
         export CUR_TAG=$(git tag | grep ^${ver}.0.[0-9]*.0$ | sort | tail -1)
         if [ "$LAST_TAG" != "" ]; then
