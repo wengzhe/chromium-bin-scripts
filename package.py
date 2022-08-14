@@ -532,14 +532,14 @@ def main():
 
   os.symlink('llvm-objcopy', os.path.join(pdir, 'bin', 'llvm-strip'))
 
-    # Make `--target=*-cros-linux-gnu` work with
-    # LLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON.
-    for arch, abi in [('armv7', 'gnueabihf'), ('aarch64', 'gnu'),
-                      ('x86_64', 'gnu')]:
-      old = '%s-unknown-linux-%s' % (arch, abi)
-      new = old.replace('unknown', 'cros').replace('armv7', 'armv7a')
-      os.symlink(
-          old, os.path.join(pdir, 'lib', 'clang', RELEASE_VERSION, 'lib', new))
+  # Make `--target=*-cros-linux-gnu` work with
+  # LLVM_ENABLE_PER_TARGET_RUNTIME_DIR=ON.
+  for arch, abi in [('armv7', 'gnueabihf'), ('aarch64', 'gnu'),
+                    ('x86_64', 'gnu')]:
+    old = '%s-unknown-linux-%s' % (arch, abi)
+    new = old.replace('unknown', 'cros').replace('armv7', 'armv7a')
+    os.symlink(
+        old, os.path.join(pdir, 'lib', 'clang', RELEASE_VERSION, 'lib', new))
 
   # Create main archive.
   PackageInArchive(pdir, pdir)
