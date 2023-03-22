@@ -78,8 +78,16 @@ function get_source_version() {
     export LLVM_REVISION=`grep "CLANG_REVISION = '.*'" $CLANG_SCRIPT_DIR/update.py | grep -o "'.*'" | grep -o "[^'].*[^']"`
 }
 
+function llvm_pre_clean() {
+    rm -rf llvm-bootstrap
+    rm -rf llvm-bootstrap-install
+    rm -rf llvm-instrumented
+    rm -rf llvm-build
+}
+
 function compile_llvm() {
     cd $THIRD_PARTY_DIR
+    llvm_pre_clean
     ensure_dir_with_git_branch llvm $GIT_LLVM $LLVM_REVISION $GIT_LLVM_ORI
     cd $CLANG_SCRIPT_DIR
     python3 build.py --without-android --without-fuchsia --skip-checkout --bootstrap --disable-asserts --pgo
