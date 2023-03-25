@@ -99,6 +99,10 @@ function compile_llvm() {
     git log | grep 5f4bbf82717d07b0f || git cherry-pick 5f4bbf82717d07b0f
     git log | grep 3501c0afd415c16d5 || git cherry-pick 3501c0afd415c16d5
     
+    # workaround for libxml2
+    sed -i '/-DLIBXML2_INCLUDE_DIR=/d' build.py
+    sed -i '/-DLIBXML2_LIBRARIES=/d' build.py
+    
     export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
     export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
     export LDFLAGS=-lrt
