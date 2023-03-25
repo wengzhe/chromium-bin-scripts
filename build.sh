@@ -99,23 +99,13 @@ function compile_llvm() {
     git log | grep 5f4bbf82717d07b0f || git cherry-pick 5f4bbf82717d07b0f
     git log | grep 3501c0afd415c16d5 || git cherry-pick 3501c0afd415c16d5
     
-    export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
-    export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
-    export LDFLAGS=-lrt
-    
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --host-cc=/opt/rh/devtoolset-7/root/usr/bin/cc --host-cxx=/opt/rh/devtoolset-7/root/usr/bin/c++ --bootstrap --disable-asserts --pgo --thinlto || \
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
+    python3 build.py --without-android --without-fuchsia --skip-checkout --bootstrap --disable-asserts --pgo --thinlto --bolt || \
+    python3 build.py --without-android --without-fuchsia --skip-checkout --bootstrap --disable-asserts --pgo --thinlto
 }
 
 function compile_gn() {
     cd $SOURCE_DIR
     ensure_dir_with_git_branch gn $GIT_GN $GN_REVISION $GIT_GN_ORI
-    
-    export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
-    export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
-    export LDFLAGS=-lrt
     
     cd gn
     python3 build/gen.py
