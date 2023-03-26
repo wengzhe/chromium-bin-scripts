@@ -103,21 +103,21 @@ function compile_llvm() {
     sed -i '/-DLIBXML2_INCLUDE_DIR=/d' build.py
     sed -i '/-DLIBXML2_LIBRARIES=/d' build.py
     
-    export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
-    export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
+    export CC=/opt/rh/devtoolset-10/root/usr/bin/cc
+    export CXX=/opt/rh/devtoolset-10/root/usr/bin/c++
     export LDFLAGS=-lrt
     
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
-    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-7/root/usr --bootstrap --disable-asserts --pgo
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo
 }
 
 function compile_gn() {
     cd $SOURCE_DIR
     ensure_dir_with_git_branch gn $GIT_GN $GN_REVISION $GIT_GN_ORI
     
-    export CC=/opt/rh/devtoolset-7/root/usr/bin/cc
-    export CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
+    export CC=/opt/rh/devtoolset-10/root/usr/bin/cc
+    export CXX=/opt/rh/devtoolset-10/root/usr/bin/c++
     export LDFLAGS=-lrt
     
     cd gn
