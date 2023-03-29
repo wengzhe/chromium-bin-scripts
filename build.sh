@@ -107,6 +107,7 @@ function compile_llvm() {
     export CXX=/opt/rh/devtoolset-10/root/usr/bin/c++
     export LDFLAGS=-lrt
     
+    python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo --thinlto --bolt || \
     python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo --thinlto || \
     python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo --lto-lld || \
     python3 build.py --without-android --without-fuchsia --skip-checkout --gcc-toolchain=/opt/rh/devtoolset-10/root/usr --bootstrap --disable-asserts --pgo
