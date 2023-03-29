@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015 The Chromium Authors. All rights reserved.
+# Copyright 2015 The Chromium Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -18,8 +18,6 @@ import subprocess
 import sys
 import tarfile
 import time
-
-from update import RELEASE_VERSION, STAMP_FILE
 
 # Path constants.
 THIS_DIR = os.path.dirname(__file__)
@@ -64,12 +62,6 @@ def TeeCmd(cmd, logfile, fail_hard=True):
 def PrintTarProgress(tarinfo):
   print('Adding', tarinfo.name)
   return tarinfo
-
-
-def GetExpectedStamp():
-  rev_cmd = [sys.executable, os.path.join(THIS_DIR, 'update.py'),
-             '--print-revision']
-  return str(subprocess.check_output(rev_cmd).decode()).rstrip()
 
 
 def GetGsutilPath():
@@ -187,6 +179,8 @@ def main():
                       help='Upload the target archive to Google Cloud Storage.')
   parser.add_argument('--build-mac-arm', action='store_true',
                       help='Build arm binaries. Only valid on macOS.')
+  parser.add_argument('--revision',
+                      help='LLVM revision to use. Default: based on update.py')
   args = parser.parse_args()
 
   if args.build_mac_arm and sys.platform != 'darwin':
@@ -196,7 +190,20 @@ def main():
     print('--build-mac-arm only valid on intel to cross-build arm')
     return 1
 
-  expected_stamp = GetExpectedStamp()
+  if args.revision:
+    # Use upload_revision.py to set the revision first.
+    cmd = [
+        sys.executable,
+        os.path.join(THIS_DIR, 'upload_revision.py'),
+        '--no-git',  # Just run locally, don't upload anything.
+        '--clang-git-hash=' + args.revision
+    ]
+    subprocess.call(cmd)
+
+  # This needs to happen after upload_revision.py modifies update.py.
+  from update import PACKAGE_VERSION, RELEASE_VERSION, STAMP_FILE
+
+  expected_stamp = PACKAGE_VERSION
   pdir = 'clang-' + expected_stamp
   print(pdir)
 
@@ -232,6 +239,8 @@ def main():
       build_cmd.append('--build-mac-arm')
     if sys.platform != 'darwin':
       build_cmd.append('--thinlto')
+    if sys.platform.startswith('linux'):
+      build_cmd.append('--bolt')
 
     TeeCmd(build_cmd, log)
 
@@ -382,6 +391,7 @@ def main():
         'lib/clang/$V/lib/i386-unknown-linux-gnu/libclang_rt.profile.a',
         'lib/clang/$V/lib/x86_64-unknown-linux-gnu/libclang_rt.profile.a',
         'lib/clang/$V/lib/linux/libclang_rt.profile-i686-android.a',
+        'lib/clang/$V/lib/linux/libclang_rt.profile-x86_64-android.a',
         'lib/clang/$V/lib/linux/libclang_rt.profile-aarch64-android.a',
         'lib/clang/$V/lib/linux/libclang_rt.profile-arm-android.a',
 
@@ -591,6 +601,15 @@ def main():
               os.path.join(clang_tidy_dir, 'bin'))
   PackageInArchive(clang_tidy_dir, clang_tidy_dir)
   MaybeUpload(args.upload, clang_tidy_dir + '.t*z', gcs_platform)
+
+  # Zip up clangd for users who opt into it.
+  clangd_dir = 'clangd-' + stamp
+  shutil.rmtree(clangd_dir, ignore_errors=True)
+  os.makedirs(os.path.join(clangd_dir, 'bin'))
+  shutil.copy(os.path.join(LLVM_RELEASE_DIR, 'bin', 'clangd' + exe_ext),
+              os.path.join(clangd_dir, 'bin'))
+  PackageInArchive(clangd_dir, clangd_dir)
+  MaybeUpload(args.upload, clangd_dir + '.t*z', gcs_platform)
 
   # Zip up clang-format so we can update it (separately from the clang roll).
   clang_format_dir = 'clang-format-' + stamp
